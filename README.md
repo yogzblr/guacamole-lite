@@ -331,6 +331,19 @@ Each section provides detailed information and examples to help you tailor `guac
 Whether you're integrating with existing Node.js frameworks, handling complex logging requirements, or setting up custom
 callbacks and events, the advanced configuration guide has you covered.
 
+## Production-Ready Example
+
+For enterprise or production environments, we provide a comprehensive example that demonstrates advanced features often
+required in real-world deployments. This example includes:
+
+* **Session Recording & Cloud Upload**: Automatically compressing session recordings and uploading them to AWS S3.
+* **Error Tracking**: Integration with Sentry for centralized error monitoring.
+* **Webhooks**: HTTP callbacks triggered on session open, close, and recording save events.
+* **Graceful Shutdown**: Proper handling of system signals to close connections cleanly.
+* **Dynamic Configuration**: Using token data to dynamically configure file paths.
+
+Check out [examples/advanced_server.js](examples/advanced_server.js) for the complete implementation.
+
 ## Testing
 
 `guacamole-lite` comes with two ways to test:
