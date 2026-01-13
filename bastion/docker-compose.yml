@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  # Guacamole daemon
+  guacd:
+    image: guacamole/guacd:1.5.4
+    container_name: guacamole-guacd
+    restart: unless-stopped
+    ports:
+      - "4822:4822"
+    networks:
+      - guacamole-net
+    volumes:
+      - guacd-drive:/drive
+      - guacd-record:/record
+
+  # MinIO (S3-compatible storage)
+  minio:
+    image: minio/minio:latest
+    container_name: guacamole-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"      # API
+      - "9001:9001"      # Console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    networks:
+      - guacamole-net
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MinIO client - create bucket on startup
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    networks:
+      - guacamole-net
+    entrypoint: >
+      /bin/sh -c "
+      sleep 10;
+      mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      mc mb myminio/guacamole-recordings --ignore-existing;
+      mc policy set download myminio/guacamole-recordings;
+      exit 0;
+      "
+
+  # Backend Node.js server
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: guacamole-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      SECRET_KEY: MySuperSecretKeyForParamsToken12
+      GUACD_HOST: guacd
+      GUACD_PORT: 4822
+      S3_ENDPOINT: http://minio:9000
+      S3_REGION: us-east-1
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      S3_BUCKET: guacamole-recordings
+      RECORDING_ENABLED: "true"
+      RECORDING_PATH: recordings/
+      LOG_LEVEL: INFO
+      NODE_ENV: production
+    depends_on:
+      - guacd
+      - minio
+    networks:
+      - guacamole-net
+    volumes:
+      - recordings:/tmp/guacamole-recordings
+
+  # Frontend React application
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: guacamole-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    environment:
+      VITE_WS_URL: ws://localhost:8080
+      VITE_API_URL: http://localhost:8080/api
+    depends_on:
+      - backend
+    networks:
+      - guacamole-net
+
+networks:
+  guacamole-net:
+    driver: bridge
+
+volumes:
+  guacd-drive:
+  guacd-record:
+  minio-data:
+  recordings:
