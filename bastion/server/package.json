@@ -1,0 +1,37 @@
+{
+  "name": "guacamole-bastion-server",
+  "version": "1.0.0",
+  "description": "Production-ready Guacamole bastion server with session recording and HTTP file transfers",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "guacamole",
+    "bastion",
+    "rdp",
+    "ssh",
+    "vnc",
+    "remote-desktop"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "express": "^4.18.2",
+    "guacamole-lite": "^1.2.0",
+    "ws": "^8.14.2",
+    "@aws-sdk/client-s3": "^3.450.0",
+    "@aws-sdk/lib-storage": "^3.450.0",
+    "multer": "^1.4.5-lts.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
